@@ -1,0 +1,936 @@
+<base href="https://blog.xkcd.com">
+<!DOCTYPE html><!--[if IE 6]>
+<html id="ie6" lang="en">
+<![endif]--><!--[if IE 7]>
+<html id="ie7" lang="en">
+<![endif]--><!--[if IE 8]>
+<html id="ie8" lang="en">
+<![endif]--><!--[if !(IE 6) & !(IE 7) & !(IE 8)]><!--><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><!--<![endif]--><head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width" />
+<title>xkcd | The blag of the webcomic</title>
+<link rel="profile" href="http://gmpg.org/xfn/11" />
+<link rel="stylesheet" type="text/css" media="all" href="https://s2.wp.com/wp-content/themes/pub/twentyeleven/style.css" />
+<link rel="pingback" href="https://blog.xkcd.com/xmlrpc.php" />
+<!--[if lt IE 9]>
+<script src="https://s2.wp.com/wp-content/themes/pub/twentyeleven/js/html5.js" type="text/javascript"></script>
+<![endif]-->
+
+<!-- Async WordPress.com Remote Login -->
+<script id="wpcom_remote_login_js">
+var wpcom_remote_login_extra_auth = '';
+function wpcom_remote_login_remove_dom_node_id( element_id ) {
+	var dom_node = document.getElementById( element_id );
+	if ( dom_node ) { dom_node.remove(); }
+}
+function wpcom_remote_login_remove_dom_node_classes( class_name ) {
+	var dom_nodes = document.querySelectorAll( '.' + class_name );
+	for ( var i = 0; i &lt; dom_nodes.length; i++ ) {
+		dom_nodes[i].remove();
+	}
+}
+function wpcom_remote_login_final_cleanup() {
+	wpcom_remote_login_remove_dom_node_classes( "wpcom_remote_login_msg" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_key" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_validate" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_js" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_request_access_iframe" );
+	wpcom_remote_login_remove_dom_node_id( "wpcom_request_access_styles" );
+}
+
+// Watch for messages back from the remote login
+window.addEventListener( "message", function( e ) {
+	if ( e.origin === "https://r-login.wordpress.com" ) {
+		var data = {};
+		try {
+			data = JSON.parse( e.data );
+		} catch( e ) {
+			wpcom_remote_login_final_cleanup();
+			return;
+		}
+
+		if ( data.msg === 'LOGIN' ) {
+			// Clean up the login check iframe
+			wpcom_remote_login_remove_dom_node_id( "wpcom_remote_login_key" );
+
+			var id_regex = new RegExp( /^[0-9]+$/ );
+			var token_regex = new RegExp( /^.*|.*|.*$/ );
+			if (
+				token_regex.test( data.token )
+				&amp;&amp; id_regex.test( data.wpcomid )
+			) {
+				// We have everything we need to ask for a login
+				var script = document.createElement( "script" );
+				script.setAttribute( "id", "wpcom_remote_login_validate" );
+				script.src = '/remote-login.php?wpcom_remote_login=validate'
+					+ '&amp;wpcomid=' + data.wpcomid
+					+ '&amp;token=' + encodeURIComponent( data.token )
+					+ '&amp;host=' + window.location.protocol
+						+ '//' + window.location.hostname;
+				document.body.appendChild( script );
+			}
+
+			return;
+		}
+
+		// Safari ITP, not logged in, so redirect
+		if ( data.msg === 'LOGIN-REDIRECT' ) {
+			window.location = 'https://wordpress.com/log-in?redirect_to=' + window.location.href;
+			return;
+		}
+
+		// Safari ITP, storage access failed, remove the request
+		if ( data.msg === 'LOGIN-REMOVE' ) {
+			var css_zap = 'html { -webkit-transition: margin-top 1s; transition: margin-top 1s; } /* 9001 */ html { margin-top: 0 !important; } * html body { margin-top: 0 !important; } @media screen and ( max-width: 782px ) { html { margin-top: 0 !important; } * html body { margin-top: 0 !important; } }';
+			var style_zap = document.createElement( 'style' );
+			style_zap.type = 'text/css';
+			style_zap.appendChild( document.createTextNode( css_zap ) );
+			document.body.appendChild( style_zap );
+
+			var e = document.getElementById( 'wpcom_request_access_iframe' );
+			e.parentNode.removeChild( e );
+
+			document.cookie = 'wordpress_com_login_access=denied; path=/; max-age=31536000';
+
+			return;
+		}
+
+		// Safari ITP
+		if ( data.msg === 'REQUEST_ACCESS' ) {
+			console.log( 'request access: safari' );
+
+			// Check ITP iframe enable/disable knob
+			if ( wpcom_remote_login_extra_auth !== 'safari_itp_iframe' ) {
+				return;
+			}
+
+			// If we are in a "private window" there is no ITP.
+			var private_window = false;
+			try {
+				var opendb = window.openDatabase( null, null, null, null );
+			} catch( e ) {
+				private_window = true;
+			}
+
+			if ( private_window ) {
+				console.log( 'private window' );
+				return;
+			}
+
+			var iframe = document.createElement( 'iframe' );
+			iframe.id = 'wpcom_request_access_iframe';
+			iframe.setAttribute( 'scrolling', 'no' );
+			iframe.setAttribute( 'sandbox', 'allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-top-navigation-by-user-activation' );
+			iframe.src = 'https://r-login.wordpress.com/remote-login.php?wpcom_remote_login=request_access&amp;origin=' + encodeURIComponent( data.origin ) + '&amp;wpcomid=' + encodeURIComponent( data.wpcomid );
+
+			var css = 'html { -webkit-transition: margin-top 1s; transition: margin-top 1s; } /* 9001 */ html { margin-top: 46px !important; } * html body { margin-top: 46px !important; } @media screen and ( max-width: 660px ) { html { margin-top: 71px !important; } * html body { margin-top: 71px !important; } #wpcom_request_access_iframe { display: block; height: 71px !important; } } #wpcom_request_access_iframe { border: 0px; height: 46px; position: fixed; top: 0; left: 0; width: 100%; min-width: 100%; z-index: 99999; background: #23282d; } ';
+
+			var style = document.createElement( 'style' );
+			style.type = 'text/css';
+			style.id = 'wpcom_request_access_styles';
+			style.appendChild( document.createTextNode( css ) );
+			document.body.appendChild( style );
+
+			document.body.appendChild( iframe );
+		}
+
+		if ( data.msg === 'DONE' ) {
+			wpcom_remote_login_final_cleanup();
+		}
+	}
+}, false );
+
+// Inject the remote login iframe after the page has had a chance to load
+// more critical resources
+window.addEventListener( "DOMContentLoaded", function( e ) {
+	var iframe = document.createElement( "iframe" );
+	iframe.style.display = "none";
+	iframe.setAttribute( "scrolling", "no" );
+	iframe.setAttribute( "id", "wpcom_remote_login_key" );
+	iframe.src = "https://r-login.wordpress.com/remote-login.php"
+		+ "?wpcom_remote_login=key"
+		+ "&amp;origin=aHR0cHM6Ly9ibG9nLnhrY2QuY29t"
+		+ "&amp;wpcomid=79314890"
+		+ "&amp;time=1555088500";
+	document.body.appendChild( iframe );
+}, false );
+</script>
+<link rel="dns-prefetch" href="//s2.wp.com" />
+<link rel="dns-prefetch" href="//s1.wp.com" />
+<link rel="dns-prefetch" href="//blogdotxkcddotcom.wordpress.com" />
+<link rel="dns-prefetch" href="//s0.wp.com" />
+<link rel="alternate" type="application/rss+xml" title="xkcd » Feed" href="https://blog.xkcd.com/feed/" />
+<link rel="alternate" type="application/rss+xml" title="xkcd » Comments Feed" href="https://blog.xkcd.com/comments/feed/" />
+	<script type="text/javascript">
+		/* &lt;![CDATA[ */
+		function addLoadEvent(func) {
+			var oldonload = window.onload;
+			if (typeof window.onload != 'function') {
+				window.onload = func;
+			} else {
+				window.onload = function () {
+					oldonload();
+					func();
+				}
+			}
+		}
+		/* ]]&gt; */
+	</script>
+			<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s0.wp.com\/wp-content\/mu-plugins\/wpcom-smileys\/twemoji\/2\/72x72\/","ext":".png","svgUrl":"https:\/\/s0.wp.com\/wp-content\/mu-plugins\/wpcom-smileys\/twemoji\/2\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/s1.wp.com\/wp-includes\/js\/wp-emoji-release.min.js?m=1550249335h&amp;ver=5.2-beta1-45050"}};
+			!function(a,b,c){function d(a,b){var c=String.fromCharCode;l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,a),0,0);var d=k.toDataURL();l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,b),0,0);var e=k.toDataURL();return d===e}function e(a){var b;if(!l||!l.fillText)return!1;switch(l.textBaseline="top",l.font="600 32px Arial",a){case"flag":return!(b=d([55356,56826,55356,56819],[55356,56826,8203,55356,56819]))&amp;&amp;(b=d([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]),!b);case"emoji":return b=d([55358,56760,9792,65039],[55358,56760,8203,9792,65039]),!b}return!1}function f(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var g,h,i,j,k=b.createElement("canvas"),l=k.getContext&amp;&amp;k.getContext("2d");for(j=Array("flag","emoji"),c.supports={everything:!0,everythingExceptFlag:!0},i=0;i&lt;j.length;i++)c.supports[j[i]]=e(j[i]),c.supports.everything=c.supports.everything&amp;&amp;c.supports[j[i]],"flag"!==j[i]&amp;&amp;(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&amp;&amp;c.supports[j[i]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&amp;&amp;!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(h=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",h,!1),a.addEventListener("load",h,!1)):(a.attachEvent("onload",h),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&amp;&amp;c.readyCallback()})),g=c.source||{},g.concatemoji?f(g.concatemoji):g.wpemoji&amp;&amp;g.twemoji&amp;&amp;(f(g.twemoji),f(g.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script><script src="https://s1.wp.com/wp-includes/js/wp-emoji-release.min.js?m=1550249335h&amp;ver=5.2-beta1-45050" type="text/javascript" defer=""></script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+	<link rel="stylesheet" id="all-css-0-1" href="https://s1.wp.com/_static/??-eJyNkt1ugzAMhV9oqVWt27qLac+SBBfc5k+JKeLtZ0Cj6tZG3KBj63zJsQMMSdkYGAOD71VyfUuhwJBs9Kp4cjj+qXa2lBd4jDm6YIEzctL2ouaqZqdwokA8rmI1U7Cub+QsaUBDhcG4OB9pss4jFB4d7jyFzQR36O+JB4FszCh9nzRPDo8NaXQCBq5hPr3/UpPsZPjq3Ms+jUkZS1Hy9dR7NSf8zy1tSL0BHqQxSqArhmW87fZ5Y2q+eWEIQmQSrKyilrnFqORGzRTDXaFOTlOuoRklayuynR/nVm76N54MVGO1nYIZnW/q2Z66A7QuGu0mw7f/2r8djseP1/3+8/wDK1MsAQ==?cssminify=yes" type="text/css" media="all" />
+<script type="text/javascript" src="https://s0.wp.com/_static/??-eJyF0FEKwjAMBuAL2RVdh0/iWWqNI3VNa5M69PRWmIhQFQJ5yAf5Ez0nheSmcgTWvtalQL4trfO80r+ACjhmK9AFpBd2kQRInjZFlgDMdoTGNMQDTqAKQ66ApK45xYb7jIR0RZj/Mg+SrDurDIx3aB3C6Z35+wcWtQ+79TCYTd9vjfEPs3xy+Q=="></script><style type="text/css"></style>
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://blogdotxkcddotcom.wordpress.com/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://s1.wp.com/wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress.com" />
+<link rel="shortlink" href="https://wp.me/5mNqq" />
+
+<!-- Jetpack Open Graph Tags -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="xkcd" />
+<meta property="og:description" content="The blag of the webcomic" />
+<meta property="og:url" content="https://blog.xkcd.com/" />
+<meta property="og:site_name" content="xkcd" />
+<meta property="og:image" content="https://s0.wp.com/i/blank.jpg" />
+<meta property="og:locale" content="en_US" />
+<meta name="twitter:site" content="@wordpressdotcom" />
+
+<!-- End Jetpack Open Graph Tags -->
+<link rel="shortcut icon" type="image/x-icon" href="https://s1.wp.com/i/favicon.ico" sizes="16x16 24x24 32x32 48x48" />
+<link rel="icon" type="image/x-icon" href="https://s1.wp.com/i/favicon.ico" sizes="16x16 24x24 32x32 48x48" />
+<link rel="apple-touch-icon-precomposed" href="https://s2.wp.com/i/webclip.png" />
+<link rel="openid.server" href="https://blogdotxkcddotcom.wordpress.com/?openidserver=1" />
+<link rel="openid.delegate" href="https://blogdotxkcddotcom.wordpress.com/" />
+<link rel="search" type="application/opensearchdescription+xml" href="https://blog.xkcd.com/osd.xml" title="xkcd" />
+<link rel="search" type="application/opensearchdescription+xml" href="https://s1.wp.com/opensearch.xml" title="WordPress.com" />
+		<style type="text/css">
+			.recentcomments a {
+				display: inline !important;
+				padding: 0 !important;
+				margin: 0 !important;
+			}
+
+			table.recentcommentsavatartop img.avatar, table.recentcommentsavatarend img.avatar {
+				border: 0px;
+				margin: 0;
+			}
+
+			table.recentcommentsavatartop a, table.recentcommentsavatarend a {
+				border: 0px !important;
+				background-color: transparent !important;
+			}
+
+			td.recentcommentsavatarend, td.recentcommentsavatartop {
+				padding: 0px 0px 1px 0px;
+				margin: 0px;
+			}
+
+			td.recentcommentstextend {
+				border: none !important;
+				padding: 0px 0px 2px 10px;
+			}
+
+			.rtl td.recentcommentstextend {
+				padding: 0px 10px 2px 0px;
+			}
+
+			td.recentcommentstexttop {
+				border: none;
+				padding: 0px 0px 0px 10px;
+			}
+
+			.rtl td.recentcommentstexttop {
+				padding: 0px 10px 0px 0px;
+			}
+		</style>
+		<meta name="application-name" content="xkcd" /><meta name="msapplication-window" content="width=device-width;height=device-height" /><meta name="msapplication-tooltip" content="The blag of the webcomic" /><meta name="msapplication-task" content="name=Subscribe;action-uri=https://blog.xkcd.com/feed/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=Sign up for a free blog;action-uri=http://wordpress.com/signup/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Support;action-uri=http://support.wordpress.com/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="msapplication-task" content="name=WordPress.com Forums;action-uri=http://forums.wordpress.com/;icon-uri=https://s1.wp.com/i/favicon.ico" /><meta name="description" content="The blag of the webcomic" />
+<style type="text/css" id="syntaxhighlighteranchor"></style>
+</head>
+
+<body class="home blog wp-embed-responsive mp6 customizer-styles-applied two-column right-sidebar highlander-enabled highlander-light infinite-scroll">
+<div id="page" class="hfeed">
+	<header id="branding" role="banner">
+			<hgroup>
+				<h1 id="site-title"><span><a href="https://blog.xkcd.com/" rel="home">xkcd</a></span></h1>
+				<h2 id="site-description">The blag of the webcomic</h2>
+			</hgroup>
+
+			
+								<form method="get" id="searchform" action="https://blog.xkcd.com/">
+		<label for="s" class="assistive-text">Search</label>
+		<input type="text" class="field" name="s" id="s" placeholder="Search" />
+		<input type="submit" class="submit" name="submit" id="searchsubmit" value="Search" />
+	</form>
+			
+			<nav id="access" role="navigation">
+				<h3 class="assistive-text">Main menu</h3>
+								<div class="skip-link"><a class="assistive-text" href="#content">Skip to primary content</a></div>
+									<div class="skip-link"><a class="assistive-text" href="#secondary">Skip to secondary content</a></div>
+												<div class="menu"><ul>
+<li class="current_page_item"><a href="https://blog.xkcd.com/">Home</a></li></ul></div>
+			</nav><!-- #access -->
+	</header><!-- #branding -->
+
+
+	<div id="main">
+
+		<div id="primary">
+			<div id="content" role="main">
+
+			
+						<nav id="nav-above">
+			<h3 class="assistive-text">Post navigation</h3>
+			<div class="nav-previous"><a href="https://blog.xkcd.com/page/2/"><span class="meta-nav">←</span> Older posts</a></div>
+			<div class="nav-next"></div>
+		</nav><!-- #nav-above -->
+	
+								
+					
+	<article id="post-883" class="post-883 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2019/02/05/how-to-absurd-scientific-advice-for-common-real-world-problems/" rel="bookmark">How To: Absurd Scientific Advice for Common Real-World Problems</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2019/02/05/how-to-absurd-scientific-advice-for-common-real-world-problems/" title="11:49 am" rel="bookmark"><time class="entry-date" datetime="2019-02-05T11:49:09-04:00">2019-02-05</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/randallpmunroe/" title="View all posts by Randall" rel="author">Randall</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p><span style="font-weight:300;">I’m excited to announce that I have a new book coming out! It’s titled </span><b>How To: Absurd Scientific Advice for Common Real-World Problems</b><span style="font-weight:300;">, and it’s an extremely unhelpful guide to solving everyday problems.</span></p>
+<p><a href="https://xkcd.com/how-to"><img data-attachment-id="884" data-permalink="https://blog.xkcd.com/2019/02/05/how-to-absurd-scientific-advice-for-common-real-world-problems/how-to-blog/" data-orig-file="https://blogdotxkcddotcom.files.wordpress.com/2019/02/how-to-blog.png?w=300&amp;h=386" data-orig-size="420,540" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="how-to-blog" data-image-description="" data-medium-file="https://blogdotxkcddotcom.files.wordpress.com/2019/02/how-to-blog.png?w=300&amp;h=386?w=233" data-large-file="https://blogdotxkcddotcom.files.wordpress.com/2019/02/how-to-blog.png?w=300&amp;h=386?w=420" class="alignnone wp-image-884" src="https://blogdotxkcddotcom.files.wordpress.com/2019/02/how-to-blog.png?w=300&amp;h=386" alt="how-to-blog" width="300" height="386" srcset="https://blogdotxkcddotcom.files.wordpress.com/2019/02/how-to-blog.png?w=300&amp;h=386 300w, https://blogdotxkcddotcom.files.wordpress.com/2019/02/how-to-blog.png?w=117&amp;h=150 117w, https://blogdotxkcddotcom.files.wordpress.com/2019/02/how-to-blog.png?w=233&amp;h=300 233w, https://blogdotxkcddotcom.files.wordpress.com/2019/02/how-to-blog.png 420w" sizes="(max-width: 300px) 100vw, 300px" /></a></p>
+<p><span style="font-weight:300;"><strong>How To</strong> is an instruction manual for taking everyday problems and using science and creative thinking to turn them into much bigger and more exciting problems. It teaches you how to cross a river by boiling it, outlines some of the many uses for lava around the home, and walks you through how to use experimental military research to ensure that your friends will never again ask you to help them move. </span></p>
+<p><span style="font-weight:300;">From changing a lightbulb to throwing a pool party, it describes unusual ways to accomplish common tasks, and analyzes what would happen to you if you tried them. In addition to being a profoundly unhelpful self-help book, it’s an exercise in applying math, science, and research to ordinary problems, and a tour through some of the strange and fun science underlying the world around us.</span></p>
+<p><strong>How To</strong> will be released on September 3rd, but you can preorder it now from <a href="https://www.amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090/">Amazon</a>, <a href="http://links.penguinrandomhouse.com/type/affiliate/isbn/9780525537090/siteID/8001/retailerid/2/trackingcode/PRH5522E62429">Barnes &amp; Noble</a>, <a href="http://links.penguinrandomhouse.com/type/affiliate/isbn/9780525537090/siteID/8001/retailerid/5/trackingcode/PRH5522E62429">Books-A-Million</a>, <a href="http://links.penguinrandomhouse.com/type/affiliate/isbn/9780525537090/siteID/8001/retailerid/6/trackingcode/penguinrandom">Indie Bound</a>, and <a href="https://itunes.apple.com/us/book/how-to/id1451461524?mt=11">Apple Books</a>.</p>
+<p>For more, you can check out my <a href="https://ew.com/books/2019/02/05/randall-munroe-how-to-announcement/">Q&amp;A with Entertainment Weekly</a> about the book, and you can find details about foreign editions at <a href="https://xkcd.com/how-to/">xkcd.com/how-to</a>.</p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-883 -->
+
+				
+					
+	<article id="post-847" class="post-847 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2015/11/24/a-puzzle-for-the-uk/" rel="bookmark">A puzzle for the UK</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2015/11/24/a-puzzle-for-the-uk/" title="3:12 pm" rel="bookmark"><time class="entry-date" datetime="2015-11-24T15:12:54-04:00">2015-11-24</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/randallpmunroe/" title="View all posts by Randall" rel="author">Randall</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p>Sadly, my current <a href="http://xkcd.com/thing-explainer/">Thing Explainer</a> book tour doesn’t stop in the UK (although you can come see me at London’s Royal Institution via live videolink on <span class="aBn"><span class="aQJ">December 7th—</span></span>tickets <a href="http://www.rigb.org/whats-on/events-2015/december/public-thing-explainer">here</a>).</p>
+<p>However, in lieu of an in-person visit, my publisher and I have put together a special puzzle for UK readers to solve.</p>
+<p>The puzzle has two steps. Step one is to find out where step two is.</p>
+<p>For step one, you can pick any one of five cities. Here’s a helpful map, followed by some interesting facts about each city.</p>
+<p><img data-attachment-id="866" data-permalink="https://blog.xkcd.com/2015/11/24/a-puzzle-for-the-uk/uk-map-80/" data-orig-file="https://blogdotxkcddotcom.files.wordpress.com/2015/11/uk-map-80.png?w=584" data-orig-size="701,945" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="uk-map-80" data-image-description="" data-medium-file="https://blogdotxkcddotcom.files.wordpress.com/2015/11/uk-map-80.png?w=584?w=223" data-large-file="https://blogdotxkcddotcom.files.wordpress.com/2015/11/uk-map-80.png?w=584?w=584" class="alignnone size-full wp-image-866" src="https://blogdotxkcddotcom.files.wordpress.com/2015/11/uk-map-80.png?w=584" alt="uk-map-80.png" srcset="https://blogdotxkcddotcom.files.wordpress.com/2015/11/uk-map-80.png?w=584 584w, https://blogdotxkcddotcom.files.wordpress.com/2015/11/uk-map-80.png?w=111 111w, https://blogdotxkcddotcom.files.wordpress.com/2015/11/uk-map-80.png?w=223 223w, https://blogdotxkcddotcom.files.wordpress.com/2015/11/uk-map-80.png 701w" sizes="(max-width: 584px) 100vw, 584px" /></p>
+<p><strong>Bristol</strong>: 2.72km<br />
+A major port, built on seven very steep hills, Bristol has long been home to explorers and inventors – and the UK’s oldest dinosaur. In 1497 John Cabot sailed out of Bristol to try to find a better route to Asia and discovered Newfoundland instead. Isambard Kingdom Brunel designed this tall road in 1830. It took another 34 years to finish, and he lived only to see the towers built (one in the suburb the road is named after).</p>
+<p><strong>London</strong>: 0.44km<br />
+A city famous (in song) for its bridges falling down and (in stories) for its streets not being paved with gold.  A fifth of all the pieces everything is made of were discovered in London, including hydrogen (originally called ‘inflammable air’) in Clapham, and ten by Humphrey Davy here. There’s even a red world space car in the Science Museum.</p>
+<p><strong>Oxford</strong>: 0.51km<br />
+Inaccurately described by writers as ‘a city of dreaming spires’, Oxford is obsessed with thing explaining. Oxford professors CS Lewis, Tolkien and Lewis Carroll turned Christianity, Anglo Saxon and mathematics into successful works of fiction. This college lays claim to William of Ockham who came up with the principle of Ockham’s razor, that the most straightforward answer is usually the right one. They would all agree that the writing stick is mightier than the sword.</p>
+<p><strong>Edinburgh</strong>: 1.85km<br />
+Built on an extinct volcano, this city is famous for its body snatchers, for Peter Higgs (big tiny thing hitter) and for Dolly the sheep. Alexander Graham Bell was educated here, and missed it so much when he moved across the Atlantic that he invented the telephone, precursor to the hand computer.</p>
+<p><strong>Cambridge</strong>: 0.05km<br />
+The university was founded in 1209 by students on the run from the Oxford police. Home to Isaac Newton, famous for working out colours of light and for understanding how dangerous sitting under an apple tree could be; a descendant of that tree remains near his room.  Also home to Stephen Hawking and 89 Nobel prizewinners (31 more than Oxford), and the Mathematical bridge.</p>
+<p>Good luck!</p>
+<p>Prizes will include signed copies of Thing Explainer and limited-edition posters and mobiles. There will also be one very special first prize.</p>
+<p>Those who’ve solved the clue but are unable to get there in person should get in touch at <a href="mailto:thingexplainer@johnmurrays.co.uk">thingexplainer@johnmurrays.co.uk</a>. For updates on the results see <a href="https://twitter.com/johnmurrays">@johnmurrays</a>. The results and winners will be announced on <a href="http://www.johnmurraybeagle.co.uk/" target="_blank" rel="noreferrer">www.johnmurraybeagle.co.uk</a> on <span class="aBn"><span class="aQJ">7th December 2015</span></span>.</p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-847 -->
+
+				
+					
+	<article id="post-840" class="post-840 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2015/09/22/a-thing-explainer-word-checker/" rel="bookmark">A Thing Explainer word checker</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2015/09/22/a-thing-explainer-word-checker/" title="2:07 pm" rel="bookmark"><time class="entry-date" datetime="2015-09-22T14:07:15-04:00">2015-09-22</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/randallpmunroe/" title="View all posts by Randall" rel="author">Randall</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p>Want to try writing using only simple words? Here’s a writing checker you can use: <a href="http://xkcd.com/simplewriter/">xkcd.com/simplewriter</a>.</p>
+<p>To help me write the words in my Up Goer Five picture, I taught my computer to watch my writing and tell me when one of the words I used wasn’t in the top ten hundred. After I put up my Up Goer picture, other people made things to check writing, too (like <a href="http://splasho.com/upgoer5">this one</a>).</p>
+<p>When I decided to write Thing Explainer, I went back to the writing checker I had used and made it better. Now, I’m happy to be able to share it with everyone!</p>
+<p>To use it, just <a href="http://xkcd.com/simplewriter/">touch here</a> and start writing. If you use a word that’s not in <em>Thing Explainer’s</em> set of the ten hundred, the word will turn red. (I usually count all forms of a word, like “kick” and “kicked,” together as one word, although there are a few special cases where I don’t.)</p>
+<p>Have fun explaining things!</p>
+<p><em>A note on the words: Some words are used more often in certain kinds of writing and talking than in others, which means different ways of counting words will give different answers for which ones we use the most. The set of ten hundred words in Thing Explainer comes from putting together many ways of counting how much people use a word to come up with a single set of ten hundred words that should sound familiar and simple to lots of people. </em></p>
+<p><em>Thank you to James Zetlen, who helped make the word checker work on other people’s computers and not just mine.</em></p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-840 -->
+
+				
+					
+	<article id="post-823" class="post-823 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2015/09/22/im-going-on-a-book-trip/" rel="bookmark">I’m going on a book trip!</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2015/09/22/im-going-on-a-book-trip/" title="12:07 pm" rel="bookmark"><time class="entry-date" datetime="2015-09-22T12:07:54-04:00">2015-09-22</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/randallpmunroe/" title="View all posts by Randall" rel="author">Randall</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p><em>I made a book that explains things. It’s called <strong>Thing Explainer</strong>. It will be out soon! It’s a big flat book full of pictures of things with lots of parts. There are also little words that tell you what all the parts do. You can read more about it <a href="https://blog.xkcd.com/2015/05/13/new-book-thing-explainer/" target="_blank">here</a>!</em></p>
+<p>When my book comes out in two months, I’m going to visit a lot of places with it! I’m going to <strong>New York, Seattle and Portland, San Francisco and Berkeley, Houston, Chicago and Naperville, </strong>and <strong>Toronto</strong>. If you live near one of those cities, maybe you can come see me!</p>
+<p>In each city I visit, I’ll be standing in a big room and talking to people. I’ll also be writing my name in people’s books, but only if they want me to.</p>
+<p><img data-attachment-id="833" data-permalink="https://blog.xkcd.com/2015/09/22/im-going-on-a-book-trip/blag_words-3/" data-orig-file="https://blogdotxkcddotcom.files.wordpress.com/2015/09/blag_words2.png" data-orig-size="209,331" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="blag_words" data-image-description="" data-medium-file="https://blogdotxkcddotcom.files.wordpress.com/2015/09/blag_words2.png?w=189&amp;h=300" data-large-file="https://blogdotxkcddotcom.files.wordpress.com/2015/09/blag_words2.png?w=209" class="alignnone size-medium wp-image-833" src="https://blogdotxkcddotcom.files.wordpress.com/2015/09/blag_words2.png?w=189&amp;h=300" alt="blag_words" width="189" height="300" srcset="https://blogdotxkcddotcom.files.wordpress.com/2015/09/blag_words2.png?w=189&amp;h=300 189w, https://blogdotxkcddotcom.files.wordpress.com/2015/09/blag_words2.png?w=95&amp;h=150 95w, https://blogdotxkcddotcom.files.wordpress.com/2015/09/blag_words2.png 209w" sizes="(max-width: 189px) 100vw, 189px" /></p>
+<p>Here’s how you can come see me in each city.<em> (This part doesn’t use simple words, but that’s because I like the people whose buildings I’m visiting and don’t want to make problems by using different words from the ones on their signs and stuff.)</em></p>
+<p><strong><span class="aBn"><span class="aQJ">TUESDAY, NOVEMBER 24</span></span></strong><br />
+<strong>NEW YORK, NY</strong><br />
+BARNES &amp; NOBLE UNION SQUARE | <span class="aBn"><span class="aQJ">6:00pm</span></span><br />
+33 E 17th Street<br />
+Note: A limited number of wristbands and seats will be available to those who provide proof of purchase of Thing Explainer from a Barnes &amp; Noble retail location or <a href="http://bn.com/" target="_blank">BN.COM</a>. For details, click <a href="http://stores.barnesandnoble.com/author/11170358" target="_blank">here</a>.</p>
+<p><strong><span class="aBn"><span class="aQJ">MONDAY, NOVEMBER 30</span></span></strong><br />
+<strong> SEATTLE, WA</strong><br />
+TOWN HALL SEATTLE AT THE GREAT HALL | <span class="aBn"><span class="aQJ">7:30pm</span></span><br />
+In Conversation with Hank Green<br />
+1119 8th Avenue<br />
+Tickets: $5 includes admission. Seating is limited. A portion of proceeds from ticket sales will be donated to <a href="http://zenomath.org/" target="_blank">Zeno: Math Powered</a>. To purchase tickets and for details, click <a href="http://townhallseattle.org/event/randall-munroe/" target="_blank">here</a>.</p>
+<p><strong><span class="aBn"><span class="aQJ">TUESDAY, DECEMBER 1</span></span></strong><br />
+<strong> BEAVERTON, OR</strong><br />
+POWELL’S BOOKS AT CEDAR HILLS CROSSING | <span class="aBn"><span class="aQJ">5:00pm</span></span><br />
+3415 SW Cedar Hills Boulevard<br />
+Note: Book signing only. Purchase of Thing Explainer from Powell’s is required for admission. Space is limited. For details, click<a href="http://www.powells.com/biblio/9780544668256" target="_blank"> here</a>.</p>
+<p><strong><span class="aBn"><span class="aQJ">WEDNESDAY, DECEMBER 2</span></span></strong><br />
+<strong> SAN FRANCISCO, CA</strong><br />
+THE BOOKSMITH AT THE RICKSHAW STOP | <span class="aBn"><span class="aQJ">7:00pm</span></span><br />
+155 Fell Street<br />
+Tickets: $35 includes one book and admission. Seating is limited. To purchase tickets and for details, click <a href="http://www.brownpapertickets.com/event/2304118" target="_blank">here</a>.</p>
+<p><strong><span class="aBn"><span class="aQJ">THURSDAY, DECEMBER 3</span></span></strong><br />
+<strong> BERKELEY, CA</strong><br />
+BERKELEY ARTS &amp; LETTERS | <span class="aBn"><span class="aQJ">7:00pm</span></span><br />
+First Congregational Church<br />
+2345 Channing Way<br />
+Tickets: $35 includes one book and admission. Seating is limited. To purchase tickets and for details, click <a href="http://www.brownpapertickets.com/event/2321863" target="_blank">here</a>.</p>
+<p><strong><span class="aBn"><span class="aQJ">MONDAY, DECEMBER 7</span></span></strong><br />
+<strong> HOUSTON, TX</strong><br />
+SPACE CENTER HOUSTON | <span class="aBn"><span class="aQJ">11:00am</span></span><br />
+1601 NASA Parkway<br />
+Tickets: Free with the price of admission to Space Center Houston. Seating is limited to those who RSVP<a href="https://xkcd-at-space-center-houston.eventbrite.com/" target="_blank"> here</a>. To purchase tickets and for more information about Space Center Houston, click <a href="http://spacecenter.org/education-programs/special-events/" target="_blank">here</a>.</p>
+<p><strong><span class="aBn"><span class="aQJ">WEDNESDAY, DECEMBER 9</span></span></strong><br />
+<strong>NAPERVILLE, IL</strong><br />
+NAPERVILLE READS | <span class="aBn"><span class="aQJ">7:00pm</span></span><br />
+North Central College at Pfeiffer Hall<br />
+310 E Benton Avenue<br />
+Tickets: Free, but required for admission. Seating is limited. To get tickets and details from Anderson’s Bookshop, click <a href="http://www.andersonsbookshop.com/event/naperville-reads-randall-munroe" target="_blank">here</a>.</p>
+<p><strong><span class="aBn"><span class="aQJ">THURSDAY, DECEMBER 10</span></span></strong><br />
+<strong>CHICAGO, IL</strong><br />
+ILLINOIS SCIENCE COUNCIL AT 1871 | <span class="aBn"><span class="aQJ">6:00pm</span></span><br />
+222 W Merchandise Mart Plaza<br />
+Tickets: $43 includes one book and admission. Seating is limited. To purchase tickets and for details, click <a href="http://xkcdchicago.eventbrite.com/" target="_blank">here</a>.</p>
+<p><strong><span class="aBn"><span class="aQJ">FRIDAY, DECEMBER 11</span></span></strong><br />
+<strong> TORONTO, ON</strong><br />
+INDIGO BOOKS &amp; MUSIC AT THE ISABEL BADER THEATER | <span class="aBn"><span class="aQJ">6:30pm</span></span><br />
+In Conversation with Ryan North<br />
+93 Charles Street W<br />
+Tickets: $40 includes one book and admission. Seating is limited. To purchase tickets and for details, click <a href="https://www.eventbrite.ca/e/indigo-exclusive-randall-munroe-tickets-18694384407" target="_blank">here</a>.</p>
+<p><strong>Other places</strong></p>
+<p>Can’t make any of these events, but still want a signed copy? A limited quantity of signed Thing Explainers are available to pre-order from <a href="http://shop.harvard.com/thing-explainer-signed" target="_blank">Harvard Bookstore</a>,<a href="http://www.portersquarebooks.com/product/signed-first-edition-thing-explainer-randall-munroe" target="_blank"> Porter Square Books</a>, and <a href="http://www.brooklinebooksmith-shop.com/thing-explainer-complicated-stuff-simple-words-hardcover-signed" target="_blank"> Brookline Booksmith</a>.</p>
+<p>Already pre-ordered your copy? Email your proof of pre-order for the print edition of Thing Explainer—either a copy of your e-receipt or photo of print receipt—and mailing address to <a href="mailto:trademarketing@hmhco.com" target="_blank">trademarketing@hmhco.com</a> by <span class="aBn"><span class="aQJ">November 15, 2015</span></span> and you’ll be entered to win one of 300 signed bookplates, which look like this:</p>
+<p><a href="https://blogdotxkcddotcom.files.wordpress.com/2015/09/te-bookplate.jpg"><img data-attachment-id="824" data-permalink="https://blog.xkcd.com/2015/09/22/im-going-on-a-book-trip/te-bookplate/" data-orig-file="https://blogdotxkcddotcom.files.wordpress.com/2015/09/te-bookplate.jpg" data-orig-size="480,390" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="TE bookplate" data-image-description="" data-medium-file="https://blogdotxkcddotcom.files.wordpress.com/2015/09/te-bookplate.jpg?w=300&amp;h=244" data-large-file="https://blogdotxkcddotcom.files.wordpress.com/2015/09/te-bookplate.jpg?w=480" class="alignnone size-medium wp-image-824" src="https://blogdotxkcddotcom.files.wordpress.com/2015/09/te-bookplate.jpg?w=300&amp;h=244" alt="TE bookplate" width="300" height="244" srcset="https://blogdotxkcddotcom.files.wordpress.com/2015/09/te-bookplate.jpg?w=300&amp;h=244 300w, https://blogdotxkcddotcom.files.wordpress.com/2015/09/te-bookplate.jpg?w=150&amp;h=122 150w, https://blogdotxkcddotcom.files.wordpress.com/2015/09/te-bookplate.jpg 480w" sizes="(max-width: 300px) 100vw, 300px" /></a></p>
+<p dir="ltr">Winners will be chosen at random. Winners will be notified and bookplates will ship the week of <span class="aBn"><span class="aQJ">November 23, 2015</span></span>. (U.S. participants only—sorry!)</p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-823 -->
+
+				
+					
+	<article id="post-805" class="post-805 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2015/05/13/new-book-thing-explainer/" rel="bookmark">New book: Thing Explainer</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2015/05/13/new-book-thing-explainer/" title="5:25 am" rel="bookmark"><time class="entry-date" datetime="2015-05-13T05:25:59-04:00">2015-05-13</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/randallpmunroe/" title="View all posts by Randall" rel="author">Randall</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p>A while ago, I posted the comic <a href="http://xkcd.com/1133/">Up Goer Five</a>, an annotated blueprint of the Saturn V rocket with all the parts described using only the thousand most common English words.</p>
+<p>Today, I’m excited to announce that I’m <a href="http://xkcd.com/thing-explainer">publishing a collection</a> of large-format (9″x13″) Up Goer Five-style blueprints. The book is full of detailed diagrams of interesting objects, along with explanations of what all the parts are and how they work.</p>
+<p>The titles, labels, and descriptions are all written using only the thousand most common English words. Since this book explains things, I’ve called it <em>Thing Explainer.</em></p>
+<p><a href="https://blogdotxkcddotcom.files.wordpress.com/2015/05/cover-web.png"><img data-attachment-id="813" data-permalink="https://blog.xkcd.com/2015/05/13/new-book-thing-explainer/cover-web/" data-orig-file="https://blogdotxkcddotcom.files.wordpress.com/2015/05/cover-web.png" data-orig-size="648,936" data-comments-opened="1" data-image-meta="{&quot;aperture&quot;:&quot;0&quot;,&quot;credit&quot;:&quot;&quot;,&quot;camera&quot;:&quot;&quot;,&quot;caption&quot;:&quot;&quot;,&quot;created_timestamp&quot;:&quot;0&quot;,&quot;copyright&quot;:&quot;&quot;,&quot;focal_length&quot;:&quot;0&quot;,&quot;iso&quot;:&quot;0&quot;,&quot;shutter_speed&quot;:&quot;0&quot;,&quot;title&quot;:&quot;&quot;,&quot;orientation&quot;:&quot;0&quot;}" data-image-title="cover-web" data-image-description="" data-medium-file="https://blogdotxkcddotcom.files.wordpress.com/2015/05/cover-web.png?w=208&amp;h=300" data-large-file="https://blogdotxkcddotcom.files.wordpress.com/2015/05/cover-web.png?w=584" class="alignnone size-medium wp-image-813" src="https://blogdotxkcddotcom.files.wordpress.com/2015/05/cover-web.png?w=208&amp;h=300" alt="cover-web" width="208" height="300" srcset="https://blogdotxkcddotcom.files.wordpress.com/2015/05/cover-web.png?w=208&amp;h=300 208w, https://blogdotxkcddotcom.files.wordpress.com/2015/05/cover-web.png?w=416&amp;h=600 416w, https://blogdotxkcddotcom.files.wordpress.com/2015/05/cover-web.png?w=104&amp;h=150 104w" sizes="(max-width: 208px) 100vw, 208px" /></a></p>
+<p>The diagrams in <em>Thing Explainer</em> cover all kinds of neat stuff—including computer buildings (datacenters), the flat rocks we live on (tectonic plates), the stuff you use to steer a plane (airliner cockpit controls), and the little bags of water you’re made of (cells).</p>
+<p><em>Thing Explainer</em> will be published by Houghton Mifflin Harcourt on November 24th. You can preorder it now (<strong><a title="Thing Explainer Amazon purchase link" href="http://amzn.to/1GCXMJ5">Amazon</a></strong>, <strong><a title="Thing Explainer Barnes and Noble purchase link" href="http://www.barnesandnoble.com/w/thing-explainer-randall-munroe/1121864432?ean=9780544668256">Barnes &amp; Noble</a></strong>, <strong><a title="Thing Explainer Indie Bound purchase link" href="http://www.indiebound.org/book/9780544668256">Indie Bound</a></strong>, <strong><a title="Thing Explainer Hudson purchase link" href="http://www.hudsonbooksellers.com/thingexplainer">Hudson</a></strong>); click <strong><a href="http://xkcd.com/thing-explainer">here</a></strong> for links to more information and options.</p>
+<p>Or, in the spirit of the book:</p>
+<p><strong>I had a good time drawing <a href="http://xkcd.com/1133/">Up Goer Five</a>, so I decided to draw more pictures like that and make a book of them. The book explains things, so it’s called <em>Thing Explainer</em>.</strong></p>
+<p><strong>You can’t have <em>Thing Explainer</em> yet, but if you want, you can order it now, and you’ll get it about a month before the end of the year.</strong></p>
+<p><strong>Touch <a href="http://xkcd.com/thing-explainer">these blue words</a> to learn how to get <em>Thing Explainer</em>.</strong></p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-805 -->
+
+				
+					
+	<article id="post-801" class="post-801 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2014/07/22/what-if-book-tour/" rel="bookmark">What If book tour!</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2014/07/22/what-if-book-tour/" title="8:08 am" rel="bookmark"><time class="entry-date" datetime="2014-07-22T08:08:55-04:00">2014-07-22</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/randallpmunroe/" title="View all posts by Randall" rel="author">Randall</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p>My book, <strong>What If?: Serious Scientific Answers to Absurd Hypothetical Questions</strong>, <a>comes out September 2nd</a> (Pre-order: <a href="http://www.amazon.com/What-If-Scientific-Hypothetical-Questions/dp/0544272994/ref=sr_1_1?s=books&amp;ie=UTF8&amp;qid=1394474740&amp;sr=1-1&amp;keywords=what+if%3F%2C+munroe">Amazon</a>, <a href="http://www.barnesandnoble.com/w/what-if-serious-scientific-answers-to-absurd-hypothetical-questions-randall-munroe/1118864093?ean=9780544272996">Barnes &amp; Noble</a>, <a href="http://www.indiebound.org/book/9780544272996">IndieBound</a>), and I’m excited to announce that I’ll be going on a book tour!</p>
+<p><img src="https://i2.wp.com/imgs.xkcd.com/blag/grand_tour.png" alt="" /></p>
+<p>Here’s the event list:</p>
+<p><b><span style="text-decoration:underline;"><br />
+Tuesday, September 2</span></b><br />
+<b></b><b>CAMBRIDGE, MA</b><br />
+Harvard Book Store at Brattle Theatre<br />
+40 Brattle St.<br />
+<b>6:00pm</b> (Seating is limited) – <em>Note: this event is now sold out! But, you can still pre-order a signed copy (link below).</em><br />
+Tickets: $26 tickets on sale August 12 at 9am ET, includes one book, one seat.<br />
+More details: <a href="http://www.harvard.com/event/randall_munroe/" target="_blank">http://www.harvard.com/event/randall_munroe/</a><br />
+<a href="http://shop.harvard.com/what-if-signed-pre-order" target="_blank">Pre-order a limited number of signed copies</a> of <i>What If?</i> from Harvard Book Store.</p>
+<p><b><span style="text-decoration:underline;">Friday, September 5</span></b><br />
+<b>NEW YORK, NY</b><br />
+Barnes &amp; Noble – Union Square<br />
+33 E 17th St.<br />
+<b>7:00pm</b><br />
+Open event, seating is first come first serve.<br />
+More details: <a href="http://store-locator.barnesandnoble.com/event/84245" target="_blank">http://store-locator.barnesandnoble.com/event/84245</a></p>
+<p><b><span style="text-decoration:underline;">Tuesday, September 9</span></b><br />
+<b>SEATTLE, WA</b><br />
+Town Hall Seattle<br />
+1119 8th Ave.<br />
+<b>7:30pm</b><br />
+Seating is limited – <em>Note: this event is now sold out!</em><br />
+Tickets: $5, one seat<br />
+More details: <a href="http://www.townhallseattle.org/randall-munroe-answering-what-if/" target="_blank">http://www.townhallseattle.org/randall-munroe-answering-what-if/</a></p>
+<p><b><span style="text-decoration:underline;">Wednesday, September 10</span></b><br />
+<b>SAN FRANCISCO, CA</b><br />
+The Booksmith at Public Works<br />
+161 Erie St.<br />
+<b>7:30pm</b><br />
+Seating is limited – <em>Note: this event is now sold out!</em><br />
+Tickets: $34 includes one book, general admission; $20 general admission<br />
+The bar at Public Works will be serving drinks before, during, and after the program. <b>This event is necessarily limited to people 21 and older</b>.<br />
+More details: <a href="http://www.brownpapertickets.com/event/772183" target="_blank">http://www.brownpapertickets.com/event/772183</a></p>
+<p><b><span style="text-decoration:underline;">Thursday, September 11</span></b><br />
+<b>BERKELEY, CA</b><br />
+Berkeley Arts &amp; Lectures at the Hillside Club<br />
+2286 Cedar St.<br />
+<b>7:30pm</b><br />
+Seating is limited – <em>Note: this event is now sold out!</em><br />
+Tickets: $10 with student ID; $15 general admission<br />
+More details: <a href="http://www.brownpapertickets.com/event/772197" target="_blank">http://www.brownpapertickets.com/event/772197</a></p>
+<p><b><span style="text-decoration:underline;">Friday, September 12</span></b><br />
+Google+ Hangout On Air moderated by Hank Green<br />
+Location: Online/Various<br />
+<b>3:30pm PT/ 6:30pm ET</b><br />
+Note: Anyone can <a href="https://www.youtube.com/watch?v=Gefilj92YIQ">view the Hangout live on YouTube</a> (Friday, 9/12, 3:30pm PT), but only 4-6 xkcd readers will be selected using <a href="https://docs.google.com/forms/d/18_tXtkX0pjW6hUWtD-YzPXKJe8WzvCCsxavoJmE0i7Y/viewform?usp=send_form" target="_blank">this form</a>  to participate and ask questions within the Hangout itself. Apply for a chance to participate in the Hangout by Monday, August 25.</p>
+<p><b><span style="text-decoration:underline;">Sunday, September 14</span></b><br />
+<b>LOS ANGELES, CA</b><br />
+Live Talks LA<br />
+An afternoon with Randall Munroe<br />
+The Aero Theatre<br />
+1328 Montana Avenue<br />
+Santa Monica<br />
+<b>4:30pm</b><br />
+Seating is limited<br />
+Tickets: $43 includes one book, one reserved seat; $20 general admission<br />
+More details: <a href="http://livetalksla.org/blog/2014/07/13/september-14-randall-munroe/" target="_blank">http://livetalksla.org/blog/2014/07/13/september-14-randall-munroe/</a></p>
+<p>Hope to see you there!</p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-801 -->
+
+				
+					
+	<article id="post-797" class="post-797 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2014/05/30/isee-3/" rel="bookmark">ISEE-3</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2014/05/30/isee-3/" title="1:17 pm" rel="bookmark"><time class="entry-date" datetime="2014-05-30T13:17:15-04:00">2014-05-30</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/randallpmunroe/" title="View all posts by Randall" rel="author">Randall</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p>Back in early March, I posted <a href="http://xkcd.com/1337/">comic #1337</a>, <em>Hack</em>, about a wayward spacecraft. ISEE-3/ICE was returning to fly past Earth after many decades of wandering through space. It was still operational, and could potentially be sent on a new mission, but NASA no longer had the equipment to talk to it—and announced that reconstructing the equipment would be too difficult and expensive.</p>
+<p>ISEE-3 is just a machine, but it’s a machine we sent on an incredible journey; to have it return home to find our door closed seemed sad to me. In my comic, I imagined a group of internet space enthusiasts banding together to find a way to take control of the probe—although I figured this was just a hopeful fantasy.</p>
+<p>I wasn’t the only one who liked the idea of “rescuing” ISEE-3. In April, Dennis Wingo and Keith Cowing put up a <a href="http://www.rockethub.com/42228">crowdfunding project on RocketHub</a> to try to learn how the lost communications systems worked, reconstruct working versions of them, obtain use of a powerful enough antenna, and commandeer the spacecraft. It seemed like an awfully long shot, but I contributed anyway.</p>
+<p>Well, yesterday, Cowing and his team announced, from the Arecibo radio telescope in Puerto Rico, that <a href="http://spacecollege.org/isee3/we-are-now-in-command-of-the-isee-3-spacecraft.html">they are now in command of the ISEE-3 spacecraft</a>.</p>
+<p>Congratulations to the team, and good luck with your new spaceship! Watch out for hackers.</p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-797 -->
+
+				
+					
+	<article id="post-774" class="post-774 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2014/03/12/what-if-i-wrote-a-book/" rel="bookmark">What if I wrote a book?</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2014/03/12/what-if-i-wrote-a-book/" title="5:00 am" rel="bookmark"><time class="entry-date" datetime="2014-03-12T05:00:05-04:00">2014-03-12</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/davean/" title="View all posts by davean" rel="author">davean</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p>For the last couple years, I’ve been answering your science questions on <a title="What-If" href="http://what-if.xkcd.com/">What If</a>.</p>
+<p>Today, I’m excited to announce that the <strong>What If?</strong> book is coming!</p>
+<div><img class="aligncenter" title="If I take into account the error bars, all I can say is that the number of books I'm announcing today is somewhere between 0.6 and 1.8." alt="" src="https://i2.wp.com/imgs.xkcd.com/blag/whatif_1.png" width="366" height="195" /></div>
+<p><strong>What If?: Serious Scientific Answers to Absurd Hypothetical Questions</strong> will be published September 2nd by Houghton Mifflin Harcourt. Starting today you can pre-order it from your favorite bookseller (<a href="http://www.barnesandnoble.com/w/what-if-serious-scientific-answers-to-absurd-hypothetical-questions-randall-munroe/1118864093?ean=9780544272996">Barnes &amp; Noble</a>, <a href="http://www.amazon.com/What-If-Scientific-Hypothetical-Questions/dp/0544272994/ref=sr_1_1?s=books&amp;ie=UTF8&amp;qid=1394474740&amp;sr=1-1&amp;keywords=what+if%3F%2C+munroe">Amazon</a>, <a href="http://www.indiebound.org/book/9780544272996">Indie Bound</a>).  There are also foreign editions, including a <a href="http://www.amazon.co.uk/What-If-Randall-Munroe/dp/1848549571/">UK and Commonwealth edition</a> and a <a href="http://www.amazon.de/What-w%C3%A4re-wenn-wissenschaftliche-hypothetische/dp/3813506525/">German edition</a>.</p>
+<p>As I’ve sifted through the letters submitted to What If every week, I’ve occasionally set aside particularly neat questions that I wanted to spend a little more time on. This book features my answers to those questions, along with revised and updated versions of some of my favorite articles from the site. (I’m also including my personal list of the weirdest questions people have submitted.)</p>
+<div><img class="aligncenter" title="The publisher had some issues with my proposal to print an antimatter edition." alt="" src="https://i0.wp.com/imgs.xkcd.com/blag/whatif_2.png" width="397" height="145" /></div>
+<p>Preorder today to get a copy as soon as it comes out!</p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-774 -->
+
+				
+					
+	<article id="post-731" class="post-731 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2014/01/31/the-baby-name-wizard/" rel="bookmark">The Baby Name Wizard</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2014/01/31/the-baby-name-wizard/" title="9:24 am" rel="bookmark"><time class="entry-date" datetime="2014-01-31T09:24:54-04:00">2014-01-31</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/randallpmunroe/" title="View all posts by Randall" rel="author">Randall</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p>The <a href="http://blog.okcupid.com/">OKCupid statistics blog</a>, by Christian Rudder, is amazing. Sadly, it hasn’t updated since 2011, around when OKCupid was bought by Match.com. (Rudder says the timing was a coincidence—he took time off for another project, and the blog may return soon!)</p>
+<p>In the meantime, I’d like to recommend another unexpectedly engrossing blog: <a href="http://www.babynamewizard.com/blog">The Baby Name Wizard blog</a>, by Laura Wattenberg (creator of the amazing <a href="http://www.babynamewizard.com/voyager">Name Voyager</a> graphing tool).</p>
+<p>I find the Baby Name Wizard blog fascinating because, like the OK Cupid Blog, it combines two key ingredients:</p>
+<ul>
+<li>Access to rich data about something that comes up all the time in our lives</li>
+<li>The ability to find and tell the stories in that data</li>
+</ul>
+<p>The reason I like the blog has nothing to do with naming babies. (I’m <a href="http://xkcd.com/1011/">not allowed</a> to name babies, anyway.)</p>
+<p>I like it because we all encounter names every day, all the time, in every part of our life. We all have feelings and opinions about what names mean, but if you’re like me, they were mostly unconscious, unquestioned, and never subject to any statistical rigor. (<em>Freakonomics</em> has a well-known chapter about naming trends, which Wattenberg <a href="http://www.babynamewizard.com/archives/2005/4/name-onomics">takes</a> <a href="http://www.babynamewizard.com/archives/2005/5/names-race-and-economists">issue</a> with).</p>
+<p><strong>Nevaeh</strong> (“Heaven” backward) is currently a more popular baby name than <strong>Sarah</strong>.  <strong>Brooklyn</strong> is more popular than either, and <strong>Sophia</strong> is more popular than all three combined. In 20 years, those names will conjure up images of college kids, and <strong>Brandon</strong> and <strong>Sarah</strong> will sound as much like Mom and Dad names as <strong>Gary</strong> and <strong>Debby</strong> do to my generation.</p>
+<div>If you’re like most people, you probably had some opinions when you read the names in the last paragraph. But maybe the biggest thing I’ve learned from reading this blog is that the reactions and stereotypes that names provoke often reveal more interesting stories than the names themselves.</div>
+<p>For example, you may have heard the urban legend about a mother who named her daughter <strong>Le-a</strong>, pronounced “Ledasha”. Wattenberg dissects this urban legend in an insightful essay (<a href="http://www.babynamewizard.com/archives/2009/10/ledasha-legends-and-race-part-one">Part 1</a>, <a href="http://www.babynamewizard.com/archives/2009/10/ledasha-legends-and-race-part-two">Part 2</a>, <a href="http://www.babynamewizard.com/archives/2009/10/ledasha-legends-and-race-part-three-of-three">Part 3</a>), which explains how apocryphal names like <strong>Le-a</strong> serve, across a wide variety of communities, as proxies for talking about race.</p>
+<p>Here are a few of the other things I’ve learned from the blog:</p>
+<ul>
+<li>The complaint that nobody has “normal” names anymore is <a href="http://www.babynamewizard.com/archives/2006/7/these-times-of-ours">surprisingly universal and timeless</a>.</li>
+<li>The All-American name <strong>Samantha</strong> was <a href="http://www.babynamewizard.com/archives/2010/7/samantha-the-ultimate-new-classic">virtually unknown</a> before it was used in <em>Bewitched</em>—for 1960s viewers, it would have sounded as obscure as <strong>Permelia</strong>.</li>
+<li>The popularity of <strong>Ava</strong> and <strong>Olivia</strong> <a href="http://www.babynamewizard.com/archives/2011/6/the-antique-name-illusion-in-search-of-the-next-ava-and-isabella">aren’t signs of a Victorian revival</a> in naming—they’re 40 times more popular now than they ever were in Victorian times.</li>
+<li>There’s a reason <a href="http://www.babynamewizard.com/archives/2010/4/the-generational-sweet-spot-or-why-your-parents-have-such-bad-taste">you hate your parents’ taste in names (and they hate yours)</a>.</li>
+<li>These days, people in the UK prefer <a href="http://www.babynamewizard.com/archives/2013/8/the-most-british-and-most-american-baby-names-revisited">cute, diminutive nicknames</a>, whereas Americans prefer <a href="http://www.babynamewizard.com/archives/2013/8/the-most-british-and-most-american-baby-names-revisited-part-2">more formal names</a>.</li>
+<li>Fictional female politicians and real female politicians <a href="http://www.babynamewizard.com/archives/2005/10/a-stranger-in-fiction">have very different types of names</a>.</li>
+<li>There’s a reason you <a href="http://www.babynamewizard.com/archives/2011/5/why-you-cant-find-a-license-plate-with-your-kids-name-on-it">can’t find a license plate with your kid’s name on it</a>.</li>
+</ul>
+<p>That’s just a tiny sampling; if you think any of it sounds interesting, I recommend browsing through the blog’s <a href="http://www.babynamewizard.com/blog">extensive archives</a>.</p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-731 -->
+
+				
+					
+	<article id="post-768" class="post-768 post type-post status-publish format-standard hentry category-uncategorized">
+		<header class="entry-header">
+						<h1 class="entry-title"><a href="https://blog.xkcd.com/2013/09/30/asteroid-4942-munroe/" rel="bookmark">Asteroid 4942 Munroe</a></h1>
+			
+						<div class="entry-meta">
+				<span class="sep">Posted on </span><a href="https://blog.xkcd.com/2013/09/30/asteroid-4942-munroe/" title="10:35 am" rel="bookmark"><time class="entry-date" datetime="2013-09-30T10:35:11-04:00">2013-09-30</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="https://blog.xkcd.com/author/randallpmunroe/" title="View all posts by Randall" rel="author">Randall</a></span></span>			</div><!-- .entry-meta -->
+			
+					</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<p>Whoa. There’s an <a href="http://ssd.jpl.nasa.gov/sbdb.cgi?sstr=4942">asteroid named after me</a>!</p>
+<p>Amazing xkcd readers Lewis Hulbert and Jordan Zhu noticed that the International Astronomical Union—the organization in charge of official astronomical naming—was taking suggestions for what to name small Solar System objects. They <a href="http://mystaceus.tumblr.com/post/62271611253/i-named-a-main-belt-asteroid-after-randall-munroe">submitted my name</a> for asteroid (4942) 1987 DU6, and it was subsequently renamed 4942 Munroe.</p>
+<p>I’m really touched. I spent all weekend telling everyone who wanted to listen (and probably some who didn’t) about the asteroid.</p>
+<p>The first thing I did was try to figure out whether 4942 Munroe was big enough to pose a threat to Earth. I was excited to learn that, based on its albedo (brightness), it’s probably about 6-10 kilometers in diameter. That’s comparable in size to <a href="https://en.wikipedia.org/wiki/Chicxulub_impactor">the one that killed the dinosaurs</a>—definitely big enough to cause a mass extinction!</p>
+<p><img class="alignnone" alt="I texted Phil Plait to let him know that 4942 Munroe is four or five times the diameter of 165347 Philplait." src="https://i1.wp.com/imgs.xkcd.com/blag/4942_munroe.png" width="401" height="292" /></p>
+<p><del>Unfortunately</del> Fortunately, it’s in a fairly stable circular orbit between Mars and Jupiter, so it’s unlikely to hit the Earth any time soon.</p>
+<p>4942 Munroe (!!!) is large enough that it would have noticeable gravity, although not much. If you were walking on the surface and you tripped and fell, it’d take you a minute to hit the ground. You could get into orbit around it by traveling at jogging speed, and might even escape its gravity entirely with a good jump.</p>
+<p>Thank you so much. This is the coolest thing.</p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+												<span class="cat-links">
+				<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="https://blog.xkcd.com/category/uncategorized/" rel="category tag">Uncategorized</a>			</span>
+															
+			
+					</footer><!-- .entry-meta -->
+	</article><!-- #post-768 -->
+
+				
+						<nav id="nav-below">
+			<h3 class="assistive-text">Post navigation</h3>
+			<div class="nav-previous"><a href="https://blog.xkcd.com/page/2/"><span class="meta-nav">←</span> Older posts</a></div>
+			<div class="nav-next"></div>
+		</nav><!-- #nav-above -->
+	
+			
+			<div id="infinite-handle"><span><button>Older posts</button></span></div></div><!-- #content -->
+		</div><!-- #primary -->
+
+		<div id="secondary" class="widget-area" role="complementary">
+					
+				<aside id="archives" class="widget">
+					<h3 class="widget-title">Archives</h3>
+					<ul>
+							<li><a href="https://blog.xkcd.com/2019/02/">February 2019</a></li>
+	<li><a href="https://blog.xkcd.com/2015/11/">November 2015</a></li>
+	<li><a href="https://blog.xkcd.com/2015/09/">September 2015</a></li>
+	<li><a href="https://blog.xkcd.com/2015/05/">May 2015</a></li>
+	<li><a href="https://blog.xkcd.com/2014/07/">July 2014</a></li>
+	<li><a href="https://blog.xkcd.com/2014/05/">May 2014</a></li>
+	<li><a href="https://blog.xkcd.com/2014/03/">March 2014</a></li>
+	<li><a href="https://blog.xkcd.com/2014/01/">January 2014</a></li>
+	<li><a href="https://blog.xkcd.com/2013/09/">September 2013</a></li>
+	<li><a href="https://blog.xkcd.com/2013/07/">July 2013</a></li>
+	<li><a href="https://blog.xkcd.com/2013/05/">May 2013</a></li>
+	<li><a href="https://blog.xkcd.com/2012/09/">September 2012</a></li>
+	<li><a href="https://blog.xkcd.com/2012/07/">July 2012</a></li>
+	<li><a href="https://blog.xkcd.com/2012/03/">March 2012</a></li>
+	<li><a href="https://blog.xkcd.com/2012/02/">February 2012</a></li>
+	<li><a href="https://blog.xkcd.com/2012/01/">January 2012</a></li>
+	<li><a href="https://blog.xkcd.com/2011/12/">December 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2011/11/">November 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2011/09/">September 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2011/08/">August 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2011/07/">July 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2011/06/">June 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2011/05/">May 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2011/04/">April 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2011/03/">March 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2011/02/">February 2011</a></li>
+	<li><a href="https://blog.xkcd.com/2010/11/">November 2010</a></li>
+	<li><a href="https://blog.xkcd.com/2010/05/">May 2010</a></li>
+	<li><a href="https://blog.xkcd.com/2010/03/">March 2010</a></li>
+	<li><a href="https://blog.xkcd.com/2010/02/">February 2010</a></li>
+	<li><a href="https://blog.xkcd.com/2009/12/">December 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/11/">November 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/10/">October 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/09/">September 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/07/">July 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/06/">June 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/05/">May 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/04/">April 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/03/">March 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/02/">February 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2009/01/">January 2009</a></li>
+	<li><a href="https://blog.xkcd.com/2008/12/">December 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/10/">October 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/09/">September 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/08/">August 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/07/">July 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/06/">June 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/05/">May 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/04/">April 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/03/">March 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/02/">February 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2008/01/">January 2008</a></li>
+	<li><a href="https://blog.xkcd.com/2007/12/">December 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/11/">November 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/10/">October 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/09/">September 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/08/">August 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/07/">July 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/06/">June 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/05/">May 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/04/">April 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/03/">March 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2007/01/">January 2007</a></li>
+	<li><a href="https://blog.xkcd.com/2006/12/">December 2006</a></li>
+	<li><a href="https://blog.xkcd.com/2006/11/">November 2006</a></li>
+	<li><a href="https://blog.xkcd.com/2006/10/">October 2006</a></li>
+					</ul>
+				</aside>
+
+				<aside id="meta" class="widget">
+					<h3 class="widget-title">Meta</h3>
+					<ul>
+						<li><a href="https://wordpress.com/start?ref=wplogin">Register</a></li>						<li><a href="https://blogdotxkcddotcom.wordpress.com/wp-login.php">Log in</a></li>
+											</ul>
+				</aside>
+
+					</div><!-- #secondary .widget-area -->
+
+	</div><!-- #main -->
+
+	<footer id="colophon" role="contentinfo">
+
+			
+
+			<div id="site-generator">
+				 								<a href="https://wordpress.com/?ref=footer_blog">Blog at WordPress.com.</a>
+			</div>
+	</footer><!-- #colophon -->
+</div><!-- #page -->
+
+		<script type="text/javascript">
+		//&lt;![CDATA[
+		var infiniteScroll = JSON.parse( decodeURIComponent( '%7B%22settings%22%3A%7B%22id%22%3A%22content%22%2C%22ajaxurl%22%3A%22https%3A%5C%2F%5C%2Fblog.xkcd.com%5C%2F%3Finfinity%3Dscrolling%22%2C%22type%22%3A%22click%22%2C%22wrapper%22%3Atrue%2C%22wrapper_class%22%3A%22infinite-wrap%22%2C%22footer%22%3A%22page%22%2C%22click_handle%22%3A%221%22%2C%22text%22%3A%22Older%20posts%22%2C%22totop%22%3A%22Scroll%20back%20to%20top%22%2C%22currentday%22%3A%2230.09.13%22%2C%22order%22%3A%22DESC%22%2C%22scripts%22%3A%5B%5D%2C%22styles%22%3A%5B%5D%2C%22google_analytics%22%3Afalse%2C%22offset%22%3A0%2C%22history%22%3A%7B%22host%22%3A%22blog.xkcd.com%22%2C%22path%22%3A%22%5C%2Fpage%5C%2F%25d%5C%2F%22%2C%22use_trailing_slashes%22%3Atrue%2C%22parameters%22%3A%22%22%7D%2C%22query_args%22%3A%7B%22error%22%3A%22%22%2C%22m%22%3A%22%22%2C%22p%22%3A0%2C%22post_parent%22%3A%22%22%2C%22subpost%22%3A%22%22%2C%22subpost_id%22%3A%22%22%2C%22attachment%22%3A%22%22%2C%22attachment_id%22%3A0%2C%22name%22%3A%22%22%2C%22pagename%22%3A%22%22%2C%22page_id%22%3A0%2C%22second%22%3A%22%22%2C%22minute%22%3A%22%22%2C%22hour%22%3A%22%22%2C%22day%22%3A0%2C%22monthnum%22%3A0%2C%22year%22%3A0%2C%22w%22%3A0%2C%22category_name%22%3A%22%22%2C%22tag%22%3A%22%22%2C%22cat%22%3A%22%22%2C%22tag_id%22%3A%22%22%2C%22author%22%3A%22%22%2C%22author_name%22%3A%22%22%2C%22feed%22%3A%22%22%2C%22tb%22%3A%22%22%2C%22paged%22%3A0%2C%22meta_key%22%3A%22%22%2C%22meta_value%22%3A%22%22%2C%22preview%22%3A%22%22%2C%22s%22%3A%22%22%2C%22sentence%22%3A%22%22%2C%22title%22%3A%22%22%2C%22fields%22%3A%22%22%2C%22menu_order%22%3A%22%22%2C%22embed%22%3A%22%22%2C%22category__in%22%3A%5B%5D%2C%22category__not_in%22%3A%5B%5D%2C%22category__and%22%3A%5B%5D%2C%22post__in%22%3A%5B%5D%2C%22post__not_in%22%3A%5B%5D%2C%22post_name__in%22%3A%5B%5D%2C%22tag__in%22%3A%5B%5D%2C%22tag__not_in%22%3A%5B%5D%2C%22tag__and%22%3A%5B%5D%2C%22tag_slug__in%22%3A%5B%5D%2C%22tag_slug__and%22%3A%5B%5D%2C%22post_parent__in%22%3A%5B%5D%2C%22post_parent__not_in%22%3A%5B%5D%2C%22author__in%22%3A%5B%5D%2C%22author__not_in%22%3A%5B%5D%2C%22posts_per_page%22%3A10%2C%22ignore_sticky_posts%22%3Afalse%2C%22suppress_filters%22%3Afalse%2C%22cache_results%22%3Afalse%2C%22update_post_term_cache%22%3Atrue%2C%22lazy_load_term_meta%22%3Atrue%2C%22update_post_meta_cache%22%3Atrue%2C%22post_type%22%3A%22%22%2C%22nopaging%22%3Afalse%2C%22comments_per_page%22%3A%2250%22%2C%22no_found_rows%22%3Afalse%2C%22order%22%3A%22DESC%22%7D%2C%22last_post_date%22%3A%222013-09-30%2010%3A35%3A11%22%2C%22stats%22%3A%22blog%3D79314890%26v%3Dwpcom%26tz%3D-4%26user_id%3D0%26subd%3Dblogdotxkcddotcom%26x_pagetype%3Dinfinite-click%22%7D%7D' ) );
+		//]]&gt;
+		</script>
+		<!--  -->
+	<div style="display:none">
+	</div>
+
+	<div id="carousel-reblog-box">
+		<form action="#" name="carousel-reblog">
+			<textarea id="carousel-reblog-content" name="carousel-reblog-content" placeholder="Add your thoughts here... (optional)"></textarea>
+			<label for="carousel-reblog-to-blog-id" id="carousel-reblog-lblogid">Post to</label>
+			<select name="carousel-reblog-to-blog-id" id="carousel-reblog-to-blog-id">
+						</select>
+
+			<div class="submit">
+				<span class="canceltext"><a href="#" class="cancel">Cancel</a></span>
+				<input type="submit" name="carousel-reblog-submit" class="button" id="carousel-reblog-submit" value="Reblog Post" />
+				<input type="hidden" id="carousel-reblog-blog-id" value="79314890" />
+				<input type="hidden" id="carousel-reblog-blog-url" value="https://blog.xkcd.com" />
+				<input type="hidden" id="carousel-reblog-blog-title" value="xkcd" />
+				<input type="hidden" id="carousel-reblog-post-url" value="" />
+				<input type="hidden" id="carousel-reblog-post-title" value="" />
+			</div>
+
+			<input type="hidden" id="_wpnonce" name="_wpnonce" value="1b380f1f2d" /><input type="hidden" name="_wp_http_referer" value="/" />		</form>
+
+		<div class="arrow"></div>
+	</div>
+<link rel="stylesheet" id="all-css-0-2" href="https://s0.wp.com/_static/??/wp-content/mu-plugins/carousel/jetpack-carousel.css,/wp-content/mu-plugins/tiled-gallery/tiled-gallery.css?m=1524699534j&amp;cssminify=yes" type="text/css" media="all" />
+<script type="text/javascript">
+/* &lt;![CDATA[ */
+var actionbardata = {"siteID":"79314890","siteName":"xkcd","siteURL":"https:\/\/blog.xkcd.com","icon":"&lt;img alt='' src='https:\/\/s2.wp.com\/i\/logo\/wpcom-gray-white.png' class='avatar avatar-50' height='50' width='50' \/&gt;","canManageOptions":"","canCustomizeSite":"","isFollowing":"","themeSlug":"pub\/twentyeleven","signupURL":"https:\/\/wordpress.com\/start\/","loginURL":"https:\/\/wordpress.com\/log-in?redirect_to=https%3A%2F%2Fblog.xkcd.com%2F2019%2F02%2F05%2Fhow-to-absurd-scientific-advice-for-common-real-world-problems%2F&amp;signup_flow=account&amp;domain=blog.xkcd.com","themeURL":"https:\/\/wordpress.com\/theme\/twentyeleven\/","xhrURL":"https:\/\/blog.xkcd.com\/wp-admin\/admin-ajax.php","nonce":"5db665f453","isSingular":"","isFolded":"","isLoggedIn":"","isMobile":"","subscribeNonce":"&lt;input type=\"hidden\" id=\"_wpnonce\" name=\"_wpnonce\" value=\"fd90b54f7a\" \/&gt;","referer":"https:\/\/blog.xkcd.com\/","canFollow":"1","feedID":"8914912","statusMessage":"","customizeLink":"https:\/\/blogdotxkcddotcom.wordpress.com\/wp-admin\/customize.php?url=https%3A%2F%2Fblogdotxkcddotcom.wordpress.com%2F","i18n":{"view":"View site","follow":"Follow","following":"Following","edit":"Edit","login":"Log in","signup":"Sign up","customize":"Customize","report":"Report this content","themeInfo":"Get theme: Twenty Eleven","shortlink":"Copy shortlink","copied":"Copied","followedText":"New posts from this site will now appear in your &lt;a href=\"https:\/\/wordpress.com\/\"&gt;Reader&lt;\/a&gt;","foldBar":"Collapse this bar","unfoldBar":"Expand this bar","editSubs":"Manage subscriptions","viewReader":"View site in Reader","viewReadPost":"View post in Reader","subscribe":"Sign me up","enterEmail":"Enter your email address","followers":"Join 1,000 other followers","alreadyUser":"Already have a WordPress.com account? &lt;a href=\"https:\/\/wordpress.com\/log-in?redirect_to=https%3A%2F%2Fblog.xkcd.com%2F2019%2F02%2F05%2Fhow-to-absurd-scientific-advice-for-common-real-world-problems%2F&amp;signup_flow=account&amp;domain=blog.xkcd.com\"&gt;Log in now.&lt;\/a&gt;","stats":"Stats"}};
+/* ]]&gt; */
+</script>
+<script type="text/javascript">
+/* &lt;![CDATA[ */
+var jetpackCarouselStrings = {"widths":[370,700,1000,1200,1400,2000],"is_logged_in":"","lang":"en","ajaxurl":"https:\/\/blog.xkcd.com\/wp-admin\/admin-ajax.php","nonce":"d56ad19f02","display_exif":"1","display_geo":"1","single_image_gallery":"1","single_image_gallery_media_file":"","background_color":"black","comment":"Comment","post_comment":"Post Comment","write_comment":"Write a Comment...","loading_comments":"Loading Comments...","download_original":"View full size &lt;span class=\"photo-size\"&gt;{0}&lt;span class=\"photo-size-times\"&gt;\u00d7&lt;\/span&gt;{1}&lt;\/span&gt;","no_comment_text":"Please be sure to submit some text with your comment.","no_comment_email":"Please provide an email address to comment.","no_comment_author":"Please provide your name to comment.","comment_post_error":"Sorry, but there was an error posting your comment. Please try again later.","comment_approved":"Your comment was approved.","comment_unapproved":"Your comment is in moderation.","camera":"Camera","aperture":"Aperture","shutter_speed":"Shutter Speed","focal_length":"Focal Length","copyright":"Copyright","comment_registration":"0","require_name_email":"1","login_url":"https:\/\/blogdotxkcddotcom.wordpress.com\/wp-login.php?redirect_to=https%3A%2F%2Fblog.xkcd.com%2F2019%2F02%2F05%2Fhow-to-absurd-scientific-advice-for-common-real-world-problems%2F","blog_id":"79314890","meta_data":["camera","aperture","shutter_speed","focal_length","copyright"],"local_comments_commenting_as":"&lt;fieldset&gt;&lt;label for=\"email\"&gt;Email (Required)&lt;\/label&gt; &lt;input type=\"text\" name=\"email\" class=\"jp-carousel-comment-form-field jp-carousel-comment-form-text-field\" id=\"jp-carousel-comment-form-email-field\" \/&gt;&lt;\/fieldset&gt;&lt;fieldset&gt;&lt;label for=\"author\"&gt;Name (Required)&lt;\/label&gt; &lt;input type=\"text\" name=\"author\" class=\"jp-carousel-comment-form-field jp-carousel-comment-form-text-field\" id=\"jp-carousel-comment-form-author-field\" \/&gt;&lt;\/fieldset&gt;&lt;fieldset&gt;&lt;label for=\"url\"&gt;Website&lt;\/label&gt; &lt;input type=\"text\" name=\"url\" class=\"jp-carousel-comment-form-field jp-carousel-comment-form-text-field\" id=\"jp-carousel-comment-form-url-field\" \/&gt;&lt;\/fieldset&gt;","reblog":"Reblog","reblogged":"Reblogged","reblog_add_thoughts":"Add your thoughts here... (optional)","reblogging":"Reblogging...","post_reblog":"Post Reblog","stats_query_args":"blog=79314890&amp;v=wpcom&amp;tz=-4&amp;user_id=0&amp;subd=blogdotxkcddotcom","is_public":"1","reblog_enabled":""};
+/* ]]&gt; */
+</script>
+<script type="text/javascript" src="https://s1.wp.com/_static/??-eJyVUEEOwjAM+xAlgNiBA+ItpQuQ0qWlSTf4PR3SJsRhEjcnsR0nMCTjIiuyghdosSeH6bn2soKvUVdMCuVKLBDojgKPggVvltuAeYFMfCEmfc1ggWvbjticbYbOimKuyMQec6a2Lpx7fzpotu4uSyKnFHkUzWiB7WyORTCAR03V2UyNSUPsQhkD12/KcIlnj05/DSe3vp4WwYqgfgSfOmWUMfCpO26bZr/fHHa7xr8BT7ifxA=="></script><div id="actionbar" class="actnbr-pub-twentyeleven actnbr-has-follow actnbr-hidden"><ul><li class="actnbr-btn actnbr-hidden"> 			    	<a class="actnbr-action actnbr-actn-follow" href=""><svg class="gridicon gridicon__follow" height="24px" width="24px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g><path d="M23 16v2h-3v3h-2v-3h-3v-2h3v-3h2v3h3zM20 2v9h-4v3h-3v4H4c-1.1 0-2-.9-2-2V2h18zM8 13v-1H4v1h4zm3-3H4v1h7v-1zm0-2H4v1h7V8zm7-4H4v2h14V4z"/></g></svg><span>Follow</span></a> 			    	<div class="actnbr-popover tip tip-top-left actnbr-notice"> 			    		<div class="tip-arrow"></div> 			    		<div class="tip-inner actnbr-follow-bubble"></div> 			    	</div> 			    </li><li class="actnbr-ellipsis actnbr-hidden"> 			  <svg class="gridicon gridicon__ellipsis" height="24" width="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="12" cy="12" r="2"/></g></svg> 			  <div class="actnbr-popover tip tip-top-left actnbr-more"> 			  	<div class="tip-arrow"></div> 			  	<div class="tip-inner"> 				  <ul> 				    <li class="actnbr-sitename actnbr-hidden"><a href="https://blog.xkcd.com"><img alt="" src="https://s2.wp.com/i/logo/wpcom-gray-white.png" class="avatar avatar-50" height="50" width="50" /> xkcd</a></li> 				   	<li class="actnbr-folded-customize actnbr-hidden"><a href="https://blogdotxkcddotcom.wordpress.com/wp-admin/customize.php?url=https%3A%2F%2Fblogdotxkcddotcom.wordpress.com%2F"><svg class="gridicon gridicon__customize" height="20px" width="20px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g><path d="M2 6c0-1.505.78-3.08 2-4 0 .845.69 2 2 2 1.657 0 3 1.343 3 3 0 .386-.08.752-.212 1.09.74.594 1.476 1.19 2.19 1.81L8.9 11.98c-.62-.716-1.214-1.454-1.807-2.192C6.753 9.92 6.387 10 6 10c-2.21 0-4-1.79-4-4zm12.152 6.848l1.34-1.34c.607.304 1.283.492 2.008.492 2.485 0 4.5-2.015 4.5-4.5 0-.725-.188-1.4-.493-2.007L18 9l-2-2 3.507-3.507C18.9 3.188 18.225 3 17.5 3 15.015 3 13 5.015 13 7.5c0 .725.188 1.4.493 2.007L3 20l2 2 6.848-6.848c1.885 1.928 3.874 3.753 5.977 5.45l1.425 1.148 1.5-1.5-1.15-1.425c-1.695-2.103-3.52-4.092-5.448-5.977z" data-reactid=".2.1.1:0.1b.0"/></g></svg><span>Customize<span></span></span></a></li> 				    <li class="actnbr-folded-follow actnbr-hidden"><a class="actnbr-action actnbr-actn-follow" href=""><svg class="gridicon gridicon__follow" height="24px" width="24px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g><path d="M23 16v2h-3v3h-2v-3h-3v-2h3v-3h2v3h3zM20 2v9h-4v3h-3v4H4c-1.1 0-2-.9-2-2V2h18zM8 13v-1H4v1h4zm3-3H4v1h7v-1zm0-2H4v1h7V8zm7-4H4v2h14V4z"/></g></svg><span>Follow</span></a></li> 					<li class="actnbr-signup actnbr-hidden"><a href="https://wordpress.com/start/">Sign up</a></li> 				    <li class="actnbr-login actnbr-hidden"><a href="https://wordpress.com/log-in?redirect_to=https%3A%2F%2Fblog.xkcd.com%2F2019%2F02%2F05%2Fhow-to-absurd-scientific-advice-for-common-real-world-problems%2F&amp;signup_flow=account&amp;domain=blog.xkcd.com">Log in</a></li> 				     				     				    <li class="flb-report actnbr-hidden"><a href="http://en.wordpress.com/abuse/">Report this content</a></li> 				     				     				    <li class="actnbr-subs actnbr-hidden"><a href="https://subscribe.wordpress.com/">Manage subscriptions</a></li> 				    <li class="actnbr-fold actnbr-hidden"><a href="">Collapse this bar</a></li> 			      </ul> 			    </div> 		      </div> 		    </li> 	      </ul></div>
+<script type="text/javascript" src="https://platform.twitter.com/widgets.js?ver=20111117"></script>
+<script type="text/javascript" src="https://s0.wp.com/_static/??-eJyVy0sOQEAMANALqcZnluIsmGbSUTUZRdyerZVYvsXDM8G0qpEaLjsk2QPrhnayGWUYZZjmkbOHxIRKB2VSzxrKuBX456bvx0IewiBC+XrrWf3SVc61deOquo03DQdDyw=="></script>
+<script type="text/javascript">
+// &lt;![CDATA[
+(function() {
+try{
+  if ( window.external &amp;&amp;'msIsSiteMode' in window.external) {
+    if (window.external.msIsSiteMode()) {
+      var jl = document.createElement('script');
+      jl.type='text/javascript';
+      jl.async=true;
+      jl.src='/wp-content/plugins/ie-sitemode/custom-jumplist.php';
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(jl, s);
+    }
+  }
+}catch(e){}
+})();
+// ]]&gt;
+</script><script type="text/javascript">
+			jQuery.extend( infiniteScroll.settings.scripts, ["jquery-core","jquery-migrate","jquery","postmessage","mobile-useragent-info","jquery_inview","jetpack_resize","spin","jquery.spin","devicepx","jetpack_likes_queuehandler","the-neverending-homepage","wpcom-masterbar-js","wpcom-masterbar-tracks-js","wpcom-actionbar-bar","jetpack-carousel","swfobject","videopress","twitter-widgets","twitter-widgets-infinity","twitter-widgets-pending","tiled-gallery"] );
+			jQuery.extend( infiniteScroll.settings.styles, ["wpcom-smileys","jetpack_likes","the-neverending-homepage","wp-block-library","wp-block-library-theme","wpcom-core-compat-playlist-styles","mp6hacks","wpcom-bbpress2-staff-css","twentyeleven-block-style","twentyeleven-wpcom-style","noticons","geo-location-flair","reblogging","infinity-twentyeleven","wpcom-actionbar-bar","h4-global","jetpack-carousel","tiled-gallery"] );
+		</script><script src="//stats.wp.com/w.js?59" type="text/javascript" async="" defer=""></script>
+<script type="text/javascript">
+_tkq = window._tkq || [];
+_stq = window._stq || [];
+_tkq.push(['storeContext', {'blog_id':'79314890','blog_tz':'-4','user_lang':'en','blog_lang':'en','user_id':'0'}]);
+_stq.push(['view', {'blog':'79314890','v':'wpcom','tz':'-4','user_id':'0','subd':'blogdotxkcddotcom'}]);
+_stq.push(['extra', {'crypt':'UE40eW5QN0p8M2Y/RE1TaVhzUzFMbjdWNHpwZGhTayxPSUFCMGRVYVNrSFguN3FwSmQ5RGtNX3VQcj1yVzhiflM1THQtLGFdQ2toOXYlQjYrMC9LcVI/VlA0X254PXM/JT9UZnxGMTBzWWYtLEtMTlZHWndIfGc0cHdkb2UtbXovUUJ5ZUlmMVFdN3dTak9RZWItP1RRJlhKUnRzbXF1RS8/d3hYWDJrUGpsTi5WOS1yMFd0TEh1aG5wMkt3cl1bYlFtYWRwd1FBeXlFaE1Ca35oeiZqYVRiPzYrMDBlZ18vXS0zVFYtR2dPdGR2dVQ1ZjZSPzVwRTlTJg=='}]);
+_stq.push([ 'clickTrackerInit', '79314890', '0' ]);
+	</script>
+<noscript>&lt;img src="https://pixel.wp.com/b.gif?v=noscript" style="height:0px;width:0px;overflow:hidden" alt="" /&gt;</noscript>
+<script>
+if ( 'object' === typeof wpcom_mobile_user_agent_info ) {
+
+	wpcom_mobile_user_agent_info.init();
+	var mobileStatsQueryString = "";
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedPlatformName )
+		mobileStatsQueryString += "&amp;x_" + 'mobile_platforms' + '=' + wpcom_mobile_user_agent_info.matchedPlatformName;
+	
+	if( false !== wpcom_mobile_user_agent_info.matchedUserAgentName )
+		mobileStatsQueryString += "&amp;x_" + 'mobile_devices' + '=' + wpcom_mobile_user_agent_info.matchedUserAgentName;
+	
+	if( wpcom_mobile_user_agent_info.isIPad() )
+		mobileStatsQueryString += "&amp;x_" + 'ipad_views' + '=' + 'views';
+
+	if( "" != mobileStatsQueryString ) {
+		new Image().src = document.location.protocol + '//pixel.wp.com/g.gif?v=wpcom-no-pv' + mobileStatsQueryString + '&amp;baba=' + Math.random();
+	}
+	
+}
+</script>
+
+
+<!--
+	generated 156 seconds ago
+	generated in 0.134 seconds
+	served from batcache in 0.003 seconds
+	expires in 144 seconds
+-->
+<iframe scrolling="no" frameborder="0" allowtransparency="true" src="https://platform.twitter.com/widgets/widget_iframe.2e9f365dae390394eb8d923cba8c5b11.html?origin=https%3A%2F%2Fblog.xkcd.com&amp;settingsEndpoint=https%3A%2F%2Fsyndication.twitter.com%2Fsettings" title="Twitter settings iframe" style="display: none;"></iframe><iframe scrolling="no" id="wpcom_remote_login_key" src="https://r-login.wordpress.com/remote-login.php?wpcom_remote_login=key&amp;origin=aHR0cHM6Ly9ibG9nLnhrY2QuY29t&amp;wpcomid=79314890&amp;time=1555088500" style="display: none;"></iframe><img src="https://pixel.wp.com/g.gif?blog=79314890&amp;v=wpcom&amp;tz=-4&amp;user_id=0&amp;subd=blogdotxkcddotcom&amp;host=blog.xkcd.com&amp;ref=&amp;fcp=880&amp;rand=0.39999724316945806" alt=":)" id="wpstats" /></body></html>

@@ -20,7 +20,7 @@ class MyTestClass(BaseCase):
     def test_basic(self):
         
         self.open("https://xkcd.com/1481/")
-        time.sleep(15)
+        # time.sleep(15)
         self.click("link=Blag")
         self.assert_text("The blag of the webcomic", "h2")
         self.update_text("input#s", "Robots!\n")

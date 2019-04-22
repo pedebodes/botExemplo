@@ -1,0 +1,13 @@
+Last_Page: https://blog.xkcd.com/
+Browser: chrome 
+Traceback: File "c:\users\gilberto\appdata\local\programs\python\python37-32\lib\unittest\case.py", line 615, in run
+    testMethod()
+  File "C:\xampp\htdocs\aplic\Python\bot\botExemplo\bot_senelium.py", line 25, in test_basic
+    self.assert_text("The blag of the webcomic adsadsadsa", "h2")
+  File "c:\xampp\htdocs\aplic\python\bot\botexemplo\src\seleniumbase\seleniumbase\fixtures\base_case.py", line 2252, in assert_text
+    self.wait_for_text_visible(text, selector, by=by, timeout=timeout)
+  File "c:\xampp\htdocs\aplic\python\bot\botexemplo\src\seleniumbase\seleniumbase\fixtures\base_case.py", line 2207, in wait_for_text_visible
+    self.driver, text, selector, by, timeout)
+  File "c:\xampp\htdocs\aplic\python\bot\botexemplo\src\seleniumbase\seleniumbase\fixtures\page_actions.py", line 280, in wait_for_text_visible
+    (text, selector, timeout, plural))
+Exception: Message: Expected text {The blag of the webcomic adsadsadsa} for {h2} was not visible after 6 seconds!
